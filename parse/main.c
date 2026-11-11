@@ -29,8 +29,8 @@ int main(int argc, const char *argv[]) {
         }
         
         parse_line(line);
-        execute_command_list();
-        print_command_list();
+        execute_simple(command_list); 
+        //print_command_list();
         free_command_list();
         
         free(line); // Liberta a memória alocada por readline
