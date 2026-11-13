@@ -1,0 +1,10 @@
+exec.c
+exec.o
+f.txt
+header.h
+main.c
+main.o
+Makefile
+parse
+parse.c
+parse.o

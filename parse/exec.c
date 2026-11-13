@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 //void execute_command_list(void){
 //    command_list;
@@ -97,6 +98,41 @@ int run_builtin(CMD *cmd) {
     return -1; 
 }
 
+static int redirect_fd(const char *path, int flags, mode_t mode, int target) {
+    int fd = open(path, flags, mode);
+    if (fd == -1) {
+        perror(path);
+        return -1;
+    }
+    if (dup2(fd, target) == -1) {
+        perror("dup2 failed");
+        close(fd);
+        return -1;
+    }
+    close(fd);
+    return 0;
+}
+
+int redirections(CMD *cmd) {
+    if (cmd == NULL) { return -1; }
+    if (cmd->infile != NULL) {
+        if (redirect_fd(cmd->infile, O_RDONLY, 0, STDIN_FILENO) == -1) {
+            return -1;
+        }
+    }
+    if (cmd->outfile != NULL) {
+        if (redirect_fd(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644, STDOUT_FILENO) == -1) {
+            return -1;
+        }
+    }
+    if (cmd->errfile != NULL) {
+        if (redirect_fd(cmd->errfile, O_WRONLY | O_CREAT | O_TRUNC, 0644, STDERR_FILENO) == -1) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 void execute_simple(CMD *cmd){ 
     if (cmd == NULL || cmd->name == NULL) {
         return;
@@ -112,6 +148,7 @@ void execute_simple(CMD *cmd){
     if (pid < 0) { perror("Fork failed"); return; }
  
     if (pid == 0) { // Processo filho
+        redirections(cmd);
         execvp(cmd->name, cmd->argv);
         perror("Exec failed");
         exit(EXIT_FAILURE);
