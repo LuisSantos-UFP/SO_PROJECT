@@ -121,7 +121,8 @@ int redirections(CMD *cmd) {
         }
     }
     if (cmd->outfile != NULL) {
-        if (redirect_fd(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644, STDOUT_FILENO) == -1) {
+        int flags = cmd->append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
+        if (redirect_fd(cmd->outfile, flags, 0644, STDOUT_FILENO) == -1) {
             return -1;
         }
     }
@@ -133,14 +134,41 @@ int redirections(CMD *cmd) {
     return 0;
 }
 
+static void restore_fd(int in, int out, int err){
+    fflush(stdout);
+    fflush(stderr);
+    dup2(in, STDIN_FILENO);
+    dup2(out, STDOUT_FILENO);
+    dup2(err, STDERR_FILENO);
+    close(in);
+    close(out);
+    close(err);
+}
+
+void builtins_redirect(CMD *cmd){
+    int g_in = dup(STDIN_FILENO);
+    int g_out = dup(STDOUT_FILENO);
+    int g_err = dup(STDERR_FILENO); 
+    if (g_in == -1 || g_out == -1 || g_err == -1) {
+        perror("dup failed");
+        return;
+    }
+    if (redirections(cmd) == -1) {
+        restore_fd(g_in, g_out, g_err);
+        return;
+    }
+    run_builtin(cmd);
+    restore_fd(g_in, g_out, g_err);
+}
+
 void execute_simple(CMD *cmd){ 
     if (cmd == NULL || cmd->name == NULL) {
         return;
     }
 
     if (is_builtin(cmd)) {
-        run_builtin(cmd);
-        return;
+    builtins_redirect(cmd);
+    return;
     }
 
     pid_t pid = fork();

@@ -22,9 +22,10 @@ typedef struct command {
     char *errfile;
     struct command *next;
     int background;
+    int append;
 } CMD;
 
-extern CMD *command_list;
+extern CMD command_list;
 
 
 CMD *insert_command();

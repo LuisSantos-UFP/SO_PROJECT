@@ -86,6 +86,7 @@ struct command *insert_command(void) {
         new_cmd->argv[i] = NULL;
     }
     new_cmd->background = 0;
+    new_cmd->append = 0;
     new_cmd->infile = NULL;
     new_cmd->outfile = NULL;
     new_cmd->errfile = NULL;
@@ -146,12 +147,21 @@ void parse_line(char *line) {
                 command->infile = strdup(infile);
             }
         }
+        else if (a[0] == '>' && a[1] == '>') {
+            outfile = a[2] ? a + 2 : strtok(NULL, " \t\r\n");
+            if (outfile) {
+                free(command->outfile);
+                command->outfile = strdup(outfile);
+                command->append = 1; // Rederecionamento de appende
+            }
+        }
         // Redirecionamento de saída '>'
         else if (a[0] == '>') {
             outfile = a[1] ? a + 1 : strtok(NULL, " \t\r\n");
             if (outfile) {
                 free(command->outfile);
                 command->outfile = strdup(outfile);
+                command->append = 0; 
             }
         }
         // Redirecionamento de erro '2>'
@@ -174,7 +184,6 @@ void parse_line(char *line) {
             }
         }
     }
-    
     if (count < MAXARGS) {
         command->argv[count] = NULL;
     }
