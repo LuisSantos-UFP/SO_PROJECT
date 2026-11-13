@@ -44,9 +44,19 @@ void builtin_echo(CMD *cmd){
     if (cmd == NULL) { return; }
     for (int i = 1; cmd->argv[i] != NULL; i++) {
         if (i > 1) { printf(" "); }
-        printf("%s ", cmd->argv[i]);
+        printf("%s", cmd->argv[i]);
     }
     printf("\n");
+}
+
+void builtin_history(void){
+    HIST_ENTRY **h_list = history_list();
+
+    if (h_list == NULL) { return; }
+    for (int i = 0; h_list[i] != NULL; i++) {
+        printf("%d: %s\n", i + history_base, h_list[i]->line);
+    }
+
 }
 
 void builtin_exit(void) {
@@ -62,9 +72,6 @@ void builtin_help(void) {
     printf("help - Display this help message.\n");
 }
 
-void builtin_history(void){
-    history_list();
-}
 
 int run_builtin(CMD *cmd) {
     if (cmd == NULL || cmd->name == NULL) { return -1; }
@@ -92,7 +99,6 @@ int run_builtin(CMD *cmd) {
 
 void execute_simple(CMD *cmd){ 
     if (cmd == NULL || cmd->name == NULL) {
-        fprintf(stderr, "Invalid command\n");
         return;
     }
 
@@ -103,8 +109,8 @@ void execute_simple(CMD *cmd){
 
     pid_t pid = fork();
     
-    if (pid < 0) { perror("Fork failed"); exit(EXIT_FAILURE); }
-
+    if (pid < 0) { perror("Fork failed"); return; }
+ 
     if (pid == 0) { // Processo filho
         execvp(cmd->name, cmd->argv);
         perror("Exec failed");
