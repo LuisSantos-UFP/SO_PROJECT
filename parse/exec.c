@@ -117,7 +117,11 @@ void execute_simple(CMD *cmd){
         exit(EXIT_FAILURE);
     } else { // Processo pai
         int status;
-        if (waitpid(pid, &status, 0) == -1) {
+        if (cmd->background) {
+            printf("O processo %d esta a correr em background\n", pid);
+            return; // Não espera pelo processo filho
+        }
+        else if (waitpid(pid, &status, 0) == -1) {
             perror("Waitpid failed");
             return;
         }

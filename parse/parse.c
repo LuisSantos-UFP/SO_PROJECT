@@ -85,6 +85,7 @@ struct command *insert_command(void) {
     for (i = 0; i < MAXARGS; i++) {
         new_cmd->argv[i] = NULL;
     }
+    new_cmd->background = 0;
     new_cmd->infile = NULL;
     new_cmd->outfile = NULL;
     new_cmd->errfile = NULL;
@@ -134,6 +135,9 @@ void parse_line(char *line) {
             command = insert_command();
             count = 0;
         }
+        else if (strcmp(a, "&") == 0) {
+            command->background = 1;
+        }
         // Redirecionamento de entrada '<'
         else if (a[0] == '<') {
             infile = a[1] ? a + 1 : strtok(NULL, " \t\r\n");
@@ -158,6 +162,7 @@ void parse_line(char *line) {
                 command->errfile = strdup(errfile);
             }
         }
+    
         // Comandos e Argumentos
         else {
             if (count < MAXARGS - 1) { // Previne overflow do buffer argv

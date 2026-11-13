@@ -21,6 +21,7 @@ typedef struct command {
     char *outfile;
     char *errfile;
     struct command *next;
+    int background;
 } CMD;
 
 extern CMD *command_list;
